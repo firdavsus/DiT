@@ -28,6 +28,8 @@ A sleek latent-space generative model inspired by **SANA**, built with a DiT-sty
 - `train.py` — training loop: add noise to latent, predict it, compute loss (MSE + maybe regularization), scheduler + optimizer, checkpointing, and sample generation.  
 - `test.py` — inference: given a prompt, run the generation loop, decode latent with VAE, and save or display images.
 
+## you can find a checkpoint there
+- `firdavsus/text2Image` <-huggingface
 ---
 <p align="center">
   <img src="examples/result_row (3).png">
