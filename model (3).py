@@ -137,9 +137,9 @@ class MultiHeadAttention(nn.Module):
         B, N_q, _ = x.shape
         if context is None:
             context = x
-            is_self_attn = True  # ✅ This is self-attention
+            is_self_attn = True  
         else:
-            is_self_attn = False  # ❌ This is cross-attention
+            is_self_attn = False  
         
         N_k = context.shape[1]
 
@@ -162,7 +162,6 @@ class MultiHeadAttention(nn.Module):
         k = k.view(B, N_k, self.num_heads, self.head_dim).permute(0, 2, 1, 3).contiguous()
         v = v.view(B, N_k, self.num_heads, self.head_dim).permute(0, 2, 1, 3).contiguous()
 
-        # ✅ CRITICAL FIX: Only apply RoPE to self-attention
         if is_self_attn and grid_h is not None and grid_w is not None:
             if grid_h * grid_w == N_q:
                 q = self._apply_rope(q, grid_h, grid_w)
@@ -242,13 +241,13 @@ class Block(nn.Module):
         # Self-Attention Path (with spatial grid_size)
         x_res = x
         x = self.adaLN_self_attn(x, t_sa)
-        x = self.self_attn(x, grid_size=grid_size)  # ✅ PASS GRID SIZE
+        x = self.self_attn(x, grid_size=grid_size) 
         x = x_res + x
 
         # Cross-Attention Path (no grid_size needed)
         x_res = x
         x = self.adaLN_cross_attn(x, t_ca)
-        x = self.cross_attn(x, context=context_emb, mask=mask)  # ❌ NO GRID SIZE
+        x = self.cross_attn(x, context=context_emb, mask=mask) 
         x = x_res + x
 
         # MLP Path
@@ -265,14 +264,11 @@ class DiT(nn.Module):
         super().__init__()
         self.learn_sigma = learn_sigma
         self.out_channels = config.num_latents * (2 if learn_sigma else 1)
-        
-        # ✅ NO PATCH EMBEDDING - each latent pixel is a token
+
         self.in_proj = nn.Linear(config.num_latents, config.model_dim)
-        
-        # ✅ NO POSITIONAL EMBEDDINGS - we use RoPE instead
+
         self.blocks = nn.ModuleList([Block() for _ in range(config.num_layers)])
-        
-        # ✅ Final projection back to latent space
+
         self.final_layer = nn.Sequential(
             nn.LayerNorm(config.model_dim),
             nn.Linear(config.model_dim, self.out_channels)
@@ -330,7 +326,6 @@ class DiT(nn.Module):
         # Project text embeddings
         text_emb = self.text_proj(text_ids)
 
-        # ✅ FLATTEN LATENT: [B, C, H, W] -> [B, H*W, C]
         x = x.permute(0, 2, 3, 1).reshape(B, N, C)  # [B, N, C]
         x = self.in_proj(x)  # [B, N, D]
         x = self.input_norm(x)
@@ -341,7 +336,6 @@ class DiT(nn.Module):
 
         # Final projection
         x = self.final_layer(x)  # [B, N, out_channels]
-        
-        # ✅ RESHAPE BACK TO LATENT: [B, N, C] -> [B, C, H, W]
+
         x = x.reshape(B, H, W, -1).permute(0, 3, 1, 2)
         return x
