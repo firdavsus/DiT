@@ -43,3 +43,5 @@ A sleek latent-space generative model inspired by **SANA**, built with a DiT-sty
   <img src="examples/result_row (12).png">
 </p>
 
+## Reference
+https://medium.com/%40geronimo7/training-a-latent-diffusion-model-from-scratch-897c7b77ece9
